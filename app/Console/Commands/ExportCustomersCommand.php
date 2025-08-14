@@ -33,13 +33,13 @@ class ExportCustomersCommand extends Command
      */
     public function handle(): void
     {
-        $filePath = storage_path('app/csv/customers.csv');
-        $lines = (int)$this->option('lines');
-
-        $this->info("Starting export {$lines} customer to {$filePath}");
-
-        $this->service->exportBatches($filePath, $lines);
-
-        $this->info("End of export to {$filePath}");
+//        $filePath = storage_path('app/csv/customers.csv');
+//        $lines = (int)$this->option('lines');
+//
+//        $this->info("Starting export {$lines} customer to {$filePath}");
+//
+//        $this->service->exportBatches($filePath, $lines);
+//
+//        $this->info("End of export to {$filePath}");
     }
 }

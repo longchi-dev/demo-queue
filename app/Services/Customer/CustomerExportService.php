@@ -2,9 +2,13 @@
 
 namespace App\Services\Customer;
 
+use App\Constants\Export\ExportCache;
+use App\Constants\Keys\CacheKey;
 use App\Jobs\ExportCustomersBatchJob;
 use App\Repositories\Customer\CustomerExportRepository;
+use App\Services\File\CsvFileService;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Cache;
 
 class CustomerExportService
 {
@@ -12,41 +16,31 @@ class CustomerExportService
     /**
      * Create a new class instance.
      */
-    public function __construct(protected CustomerExportRepository $repository)
+    public function __construct(
+        protected CustomerExportRepository $repository,
+        protected CsvFileService $csvFileService,
+        protected ExportCache $exportCache
+    )
     {
         $this->batchSize = config('export.batch_size');
     }
 
     /**
-     * Export toan bo du lieu khong chia batch
-     */
-    public function exportAll(string $filePath): void
-    {
-        $customers = $this->repository->getAllCustomers();
-
-        $handle = fopen($filePath, 'w');
-
-        fputcsv($handle, ['uuid', 'name', 'email']);
-
-        foreach ($customers as $customer) {
-            fputcsv($handle, [$customer->uuid, $customer->name, $customer->email]);
-        }
-
-        fclose($handle);
-    }
-
-    /**
      * @throws \Throwable
      */
-    public function exportBatches(string $filePath, int $lines): void
+    public function exportCustomerData(string $uuid): string
     {
-        if (!is_dir(dirname($filePath))) {
-            mkdir(dirname($filePath), 0755, true);
-        }
-        $handle = fopen($filePath, 'w');
-        fputcsv($handle, ['uuid', 'name', 'email']);
-        fclose($handle);
+        $filePath = $this->csvFileService->createCsvFile($uuid);
 
-        ExportCustomersBatchJob::dispatch($filePath, 0, $this->batchSize, $lines);
+        $this->exportCache->init($uuid);
+
+        ExportCustomersBatchJob::dispatch(
+            $uuid,
+            $filePath,
+            0,
+            $this->batchSize
+        );
+
+        return $filePath;
     }
 }
